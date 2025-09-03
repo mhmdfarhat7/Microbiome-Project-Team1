@@ -14,15 +14,15 @@ ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Le
 
 export default function CompositionChart({ data, kind = "pie" }) {
   const chartData = useMemo(() => {
-    // Generate unique colors for any number of categories
+    // Generate unique colors for any number of categories with maximum contrast
     const generateColors = (count) => {
       const baseColors = [
-        '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
-        '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
-        '#F8C471', '#82E0AA', '#F1948A', '#D7BDE2', '#F9E79F',
-        '#D5A6BD', '#A9CCE3', '#FAD7A0', '#ABEBC6', '#E74C3C',
-        '#3498DB', '#2ECC71', '#F1C40F', '#9B59B6', '#1ABC9C',
-        '#E67E22', '#34495E', '#16A085', '#8E44AD', '#27AE60'
+        '#E74C3C', '#3498DB', '#2ECC71', '#F1C40F', '#9B59B6',
+        '#1ABC9C', '#E67E22', '#34495E', '#16A085', '#8E44AD',
+        '#27AE60', '#D35400', '#2980B9', '#F39C12', '#2C3E50',
+        '#8B4513', '#4A90E2', '#7ED321', '#FFD700', '#9370DB',
+        '#20B2AA', '#FF6347', '#32CD32', '#FF4500', '#00CED1',
+        '#FF69B4', '#00FA9A', '#FF1493', '#00BFFF', '#FF8C00'
       ];
       
       // If we need more colors than base colors, generate additional ones
@@ -30,12 +30,13 @@ export default function CompositionChart({ data, kind = "pie" }) {
         return baseColors.slice(0, count);
       }
       
-      // Generate additional colors using HSL for better distribution
+      // Generate additional colors using optimized HSL for maximum contrast
       const additionalColors = [];
       for (let i = baseColors.length; i < count; i++) {
-        const hue = (i * 137.508) % 360; // Golden angle approximation for good distribution
-        const saturation = 65 + (i % 25); // Vary saturation between 65-90%
-        const lightness = 45 + (i % 25); // Vary lightness between 45-70%
+        // Use different multipliers for better distribution
+        const hue = (i * 137.508 + 180) % 360; // Offset by 180° for better separation
+        const saturation = 80 + (i % 15); // High saturation (80-95%) for vivid colors
+        const lightness = 35 + (i % 35); // Wide lightness range (35-70%) for maximum contrast
         additionalColors.push(`hsl(${hue}, ${saturation}%, ${lightness}%)`);
       }
       
