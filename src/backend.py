@@ -23,7 +23,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--phylum",
         type=str,
-        default="data/sandpiper1.0.0.condensed.summary.phylum.csv.gz",
+        default="Microbe-vis-data/sandpiper1.0.0.condensed.summary.phylum.csv.gz",
         help="Path to phylum-level composition CSV (.csv.gz)."
     )
     p.add_argument(
