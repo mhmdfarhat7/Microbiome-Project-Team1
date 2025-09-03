@@ -1,0 +1,6 @@
+biosample
+collection_date: Non-empty rows in column: 414970
+geo_loc_name: Non-empty rows in column: 419386
+lat_lon: Non-empty rows in column: 398134
+isolation_source: Non-empty rows in column: 258620
+host: Non-empty rows in column: 317779
