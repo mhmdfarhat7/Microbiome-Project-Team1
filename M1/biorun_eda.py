@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#!/usr/bin/env python3
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
@@ -18,8 +19,11 @@ def eda_bioruns(filtered_file: str = "filtered_bioruns.csv"):
 
     # Bioruns per biosample
     bioruns_per_biosample = df.groupby('biosample').size()
-    print("\nBioruns per biosample (first 10):")
-    print(bioruns_per_biosample.head(10))
+    print("\nTop 10 biosamples with most bioruns:")
+    top_bioruns = bioruns_per_biosample.sort_values(ascending=False).head(10)
+    for biosample, count in top_bioruns.items():
+        print(f"{biosample}: {count} bioruns")
+
     print(f"Average bioruns per biosample: {bioruns_per_biosample.mean():.2f}")
     print(f"Max bioruns per biosample: {bioruns_per_biosample.max()}")
     print(f"Min bioruns per biosample: {bioruns_per_biosample.min()}")
