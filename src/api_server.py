@@ -52,9 +52,17 @@ def api_composition(env):
     try:
         # Get query parameters
         top = request.args.get('top', type=int, default=50)
+        group_others = request.args.get('group_others', type=str, default='true').lower() == 'true'
+        others_threshold = request.args.get('others_threshold', type=float, default=0.5)
         
         # Get composition data
-        result = get_phylum_composition(env=env, top=top, as_dataframe=False)
+        result = get_phylum_composition(
+            env=env, 
+            top=top, 
+            as_dataframe=False,
+            group_others=group_others,
+            others_threshold=others_threshold
+        )
         
         return jsonify({
             'success': True,
@@ -117,6 +125,7 @@ if __name__ == '__main__':
     print("  GET /api/health          - Health check")
     print("  GET /api/environments    - List environments")
     print("  GET /api/composition/<env> - Get composition data")
+    print("    Query params: top=N, group_others=true/false, others_threshold=0.5")
     print("  GET /api/stats           - Get data statistics")
     print("=" * 60)
     

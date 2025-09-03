@@ -14,11 +14,36 @@ ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Le
 
 export default function CompositionChart({ data, kind = "pie" }) {
   const chartData = useMemo(() => {
-    const colors = [
-      '#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe',
-      '#43e97b', '#38f9d7', '#ffecd2', '#fcb69f', '#a8edea', '#fed6e3',
-      '#d299c2', '#fef9d7', '#667eea', '#764ba2', '#f093fb', '#f5576c'
-    ];
+    // Generate unique colors for any number of categories
+    const generateColors = (count) => {
+      const baseColors = [
+        '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+        '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
+        '#F8C471', '#82E0AA', '#F1948A', '#D7BDE2', '#F9E79F',
+        '#D5A6BD', '#A9CCE3', '#FAD7A0', '#ABEBC6', '#E74C3C',
+        '#3498DB', '#2ECC71', '#F1C40F', '#9B59B6', '#1ABC9C',
+        '#E67E22', '#34495E', '#16A085', '#8E44AD', '#27AE60'
+      ];
+      
+      // If we need more colors than base colors, generate additional ones
+      if (count <= baseColors.length) {
+        return baseColors.slice(0, count);
+      }
+      
+      // Generate additional colors using HSL for better distribution
+      const additionalColors = [];
+      for (let i = baseColors.length; i < count; i++) {
+        const hue = (i * 137.508) % 360; // Golden angle approximation for good distribution
+        const saturation = 65 + (i % 25); // Vary saturation between 65-90%
+        const lightness = 45 + (i % 25); // Vary lightness between 45-70%
+        additionalColors.push(`hsl(${hue}, ${saturation}%, ${lightness}%)`);
+      }
+      
+      return [...baseColors, ...additionalColors];
+    };
+
+    const numCategories = data?.labels?.length || 0;
+    const colors = generateColors(numCategories);
 
     return {
       labels: data?.labels ?? [],
@@ -26,11 +51,11 @@ export default function CompositionChart({ data, kind = "pie" }) {
         {
           label: "Relative abundance (%)",
           data: data?.values ?? [],
-          backgroundColor: colors.slice(0, data?.labels?.length || 0),
-          borderColor: colors.slice(0, data?.labels?.length || 0).map(color => color + '80'),
+          backgroundColor: colors,
+          borderColor: colors.map(color => color + '80'),
           borderWidth: 2,
-          hoverBackgroundColor: colors.slice(0, data?.labels?.length || 0).map(color => color + 'CC'),
-          hoverBorderColor: colors.slice(0, data?.labels?.length || 0),
+          hoverBackgroundColor: colors.map(color => color + 'CC'),
+          hoverBorderColor: colors,
           hoverBorderWidth: 3,
         },
       ],

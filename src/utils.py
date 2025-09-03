@@ -96,6 +96,39 @@ def load_phylum_rows(phylum_path: str, target_bioruns: Iterable[str]) -> pd.Data
 # Core M2 logic: average composition (phylum)
 # ----------------------------------------------------
 
+def group_small_percentages(series: pd.Series, threshold: float = 0.5) -> pd.Series:
+    """
+    Group small percentages below threshold into an "Other" category.
+    
+    Args:
+        series: pandas Series with taxa as index and percentages as values
+        threshold: percentage threshold below which taxa are grouped (default: 0.5)
+    
+    Returns:
+        Modified series with small percentages grouped as "Other"
+    """
+    if series.empty:
+        return series
+    
+    # Find taxa below threshold
+    below_threshold = series < threshold
+    
+    if below_threshold.any():
+        # Sum up all small percentages
+        other_sum = series[below_threshold].sum()
+        
+        # Keep only taxa above threshold
+        result = series[~below_threshold].copy()
+        
+        # Add "Other" category if there are small percentages
+        if other_sum > 0:
+            result["Other"] = other_sum
+            
+        return result
+    
+    return series
+
+
 def select_bioruns_for_env(
     df_meta: pd.DataFrame,
     env: str,
@@ -117,7 +150,9 @@ def average_composition(
     env: str,
     df_meta: pd.DataFrame,
     phylum_path: str,
-    top_n: Optional[int] = 50
+    top_n: Optional[int] = 50,
+    group_others: bool = True,
+    others_threshold: float = 0.5
 ) -> Tuple[pd.Series, int]:
     """
     Compute the average phylum-level composition for a given environment.
@@ -127,6 +162,15 @@ def average_composition(
     2) Load ONLY those bioruns' rows from the phylum CSV (chunked).
     3) Average column-wise (ignore NaNs).
     4) Sort descending, drop zeros/NaNs, optionally keep top_n.
+    5) Group small percentages into "Other" category if requested.
+
+    Args:
+        env: environment name to filter by
+        df_meta: metadata DataFrame
+        phylum_path: path to phylum composition file
+        top_n: keep top N taxa (None for all)
+        group_others: whether to group small percentages into "Other"
+        others_threshold: percentage threshold for grouping (default: 0.5%)
 
     Returns:
       (series, n_runs_used)
@@ -151,8 +195,21 @@ def average_composition(
     # 4) Clean up: drop NaNs, zeros; sort desc; keep top_n
     mean_series = mean_series.dropna()
     mean_series = mean_series[mean_series > 0].sort_values(ascending=False)
+    
+    # 5) Group small percentages into "Other" if requested
+    if group_others:
+        mean_series = group_small_percentages(mean_series, others_threshold)
+    
+    # 6) Apply top_n limit after grouping (so "Other" is preserved)
     if top_n is not None:
-        mean_series = mean_series.head(top_n)
+        # If we have "Other", make sure it's included in top_n
+        if "Other" in mean_series.index:
+            # Keep top_n-1 individual taxa + "Other"
+            top_individual = mean_series[mean_series.index != "Other"].head(top_n - 1)
+            other_value = mean_series["Other"]
+            mean_series = pd.concat([top_individual, pd.Series([other_value], index=["Other"])])
+        else:
+            mean_series = mean_series.head(top_n)
 
     n_runs_used = df_phylum_subset.shape[0]
     return mean_series, n_runs_used

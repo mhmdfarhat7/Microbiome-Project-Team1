@@ -60,7 +60,9 @@ def get_environments(top: Optional[int] = None) -> List[str]:
 def get_phylum_composition(
     env: str, 
     top: Optional[int] = 50, 
-    as_dataframe: bool = False
+    as_dataframe: bool = False,
+    group_others: bool = True,
+    others_threshold: float = 0.5
 ) -> Union[Dict[str, Any], pd.DataFrame]:
     """
     Get phylum composition for a specific environment.
@@ -69,6 +71,8 @@ def get_phylum_composition(
         env: Environment name (must match organism_name exactly)
         top: Number of top phyla to return (None for all)
         as_dataframe: If True, return pandas DataFrame. If False, return dict.
+        group_others: Whether to group small percentages into "Other" category (default: True)
+        others_threshold: Percentage threshold below which taxa are grouped (default: 0.5%)
     
     Returns:
         If as_dataframe=False: Dict with structure:
@@ -108,7 +112,9 @@ def get_phylum_composition(
         env=env,
         df_meta=df_meta,
         phylum_path=PHYLUM_PATH,
-        top_n=top
+        top_n=top,
+        group_others=group_others,
+        others_threshold=others_threshold
     )
     
     if n_runs == 0:
