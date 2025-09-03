@@ -1,0 +1,216 @@
+import { useEffect, useState } from "react";
+import EnvironmentSelect from "./components/EnvironmentSelect";
+import LevelSelect from "./components/LevelSelect";
+import CompositionChart from "./components/CompositionChart";
+import Panel from "./components/Panel";
+import { fetchEnvironments, fetchComposition } from "./services/api.mock"; // <- mock for now
+
+export default function App() {
+  const [envs, setEnvs] = useState([]);
+  const [env, setEnv] = useState("");
+  const [level, setLevel] = useState("phylum");
+  const [data, setData] = useState(null);
+  const [loadingEnv, setLoadingEnv] = useState(true);
+  const [loadingData, setLoadingData] = useState(false);
+  const [error, setError] = useState("");
+  const [chartType, setChartType] = useState("pie");
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // load environment list once
+  useEffect(() => {
+    (async () => {
+      try {
+        const list = await fetchEnvironments();
+        setEnvs(list);
+      } catch (e) {
+        setError("Failed to load environments");
+      } finally {
+        setLoadingEnv(false);
+      }
+    })();
+  }, []);
+
+  // handle window resize for responsive design
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // fetch composition when env or level changes (and env selected)
+  useEffect(() => {
+    if (!env) return;
+    setLoadingData(true);
+    setError("");
+    (async () => {
+      try {
+        const res = await fetchComposition(env, level);
+        setData(res);
+      } catch (e) {
+        setError("Failed to load composition");
+        setData(null);
+      } finally {
+        setLoadingData(false);
+      }
+    })();
+  }, [env, level]);
+
+  return (
+    <div style={{ 
+      width: "100vw", 
+      height: "100vh", 
+      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", 
+      display: "flex", 
+      flexDirection: "column",
+      overflow: "hidden"
+    }}>
+      <header style={{ 
+        padding: isMobile ? "16px 20px" : "20px 30px", 
+        background: "rgba(255, 255, 255, 0.1)", 
+        backdropFilter: "blur(10px)",
+        borderBottom: "1px solid rgba(255, 255, 255, 0.2)"
+      }}>
+        <h1 style={{ 
+          margin: 0, 
+          color: "white", 
+          fontSize: isMobile ? "1.8rem" : "2.5rem", 
+          fontWeight: "700",
+          textShadow: "0 2px 4px rgba(0,0,0,0.3)"
+        }}>
+          Microbe Composition Viewer
+        </h1>
+        <p style={{ 
+          marginTop: 8, 
+          color: "rgba(255, 255, 255, 0.9)", 
+          fontSize: isMobile ? "0.9rem" : "1.1rem",
+          textShadow: "0 1px 2px rgba(0,0,0,0.3)"
+        }}>
+          Choose an environment and level to explore microbial composition.
+        </p>
+      </header>
+
+      <div style={{ 
+        flex: 1, 
+        display: "grid", 
+        gridTemplateColumns: isMobile ? "1fr" : "350px 1fr", 
+        gridTemplateRows: isMobile ? "auto 1fr" : "1fr",
+        gap: 20, 
+        padding: isMobile ? 16 : 20,
+        overflow: "hidden"
+      }}>
+        {/* left column: controls */}
+        <div style={{ 
+          display: "flex", 
+          flexDirection: "column", 
+          gap: 20, 
+          height: "fit-content"
+        }}>
+          <Panel title="Filters">
+            {loadingEnv ? (
+              <p>Loading environments…</p>
+            ) : (
+              <>
+                <EnvironmentSelect
+                  options={envs}
+                  value={env}
+                  onChange={setEnv}
+                />
+                <div style={{ height: 16 }} />
+                <LevelSelect
+                  value={level}
+                  onChange={setLevel}
+                  disabled={!env}
+                />
+              </>
+            )}
+          </Panel>
+
+          <Panel title="View Options">
+            <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+              <button 
+                onClick={() => setChartType("pie")}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "6px",
+                  border: "1px solid #ddd",
+                  background: chartType === "pie" ? "#667eea" : "white",
+                  color: chartType === "pie" ? "white" : "#333",
+                  cursor: "pointer",
+                  fontSize: "14px"
+                }}
+              >
+                Pie Chart
+              </button>
+              <button 
+                onClick={() => setChartType("bar")}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "6px",
+                  border: "1px solid #ddd",
+                  background: chartType === "bar" ? "#667eea" : "white",
+                  color: chartType === "bar" ? "white" : "#333",
+                  cursor: "pointer",
+                  fontSize: "14px"
+                }}
+              >
+                Bar Chart
+              </button>
+            </div>
+            <small style={{ color: "#666" }}>
+              Switch between chart types to explore your data differently.
+            </small>
+          </Panel>
+        </div>
+
+        {/* right column: chart */}
+        <div style={{ 
+          display: "flex", 
+          flexDirection: "column",
+          height: "100%",
+          overflow: "hidden"
+        }}>
+          {error && (
+            <div style={{ 
+              color: "#ff6b6b", 
+              marginBottom: 16, 
+              padding: "12px 16px",
+              background: "rgba(255, 107, 107, 0.1)",
+              borderRadius: "8px",
+              border: "1px solid rgba(255, 107, 107, 0.3)"
+            }}>
+              {error}
+            </div>
+          )}
+          {loadingData && env && (
+            <div style={{ 
+              color: "white", 
+              textAlign: "center", 
+              padding: "40px",
+              fontSize: "1.2rem"
+            }}>
+              Loading composition…
+            </div>
+          )}
+          {!env && (
+            <div style={{ 
+              color: "rgba(255, 255, 255, 0.8)", 
+              textAlign: "center", 
+              padding: "40px",
+              fontSize: "1.2rem"
+            }}>
+              Select an environment to see results.
+            </div>
+          )}
+          {data && (
+            <div style={{ flex: 1, minHeight: 0 }}>
+              <CompositionChart data={data} kind={chartType} />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
