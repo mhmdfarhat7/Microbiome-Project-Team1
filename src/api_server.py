@@ -17,7 +17,7 @@ import os
 # Add current directory to path for imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from backend_lib import get_environments, get_phylum_composition
+from backend_lib import get_environments, get_phylum_composition, get_geographic_locations, get_data_by_location
 
 app = Flask(__name__)
 CORS(app)  # Allow M3 frontend to call this API
@@ -118,6 +118,57 @@ def api_stats():
         }), 500
 
 
+@app.route('/api/geographic-locations', methods=['GET'])
+def api_geographic_locations():
+    """Get list of available geographic locations."""
+    try:
+        from backend_lib import get_geographic_locations
+        
+        locations = get_geographic_locations()
+        
+        return jsonify({
+            'success': True,
+            'locations': locations,
+            'count': len(locations)
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/location/<location>', methods=['GET'])
+def api_location_data(location):
+    """Get microbiome data filtered by geographic location."""
+    try:
+        from backend_lib import get_data_by_location
+        
+        # Decode URL-encoded location name
+        import urllib.parse
+        decoded_location = urllib.parse.unquote(location)
+        
+        result = get_data_by_location(decoded_location)
+        
+        if result.get('success', False):
+            return jsonify({
+                'success': True,
+                'data': result
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result.get('error', 'Unknown error')
+            }), 404
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 if __name__ == '__main__':
     print("🚀 Starting M2 Backend API Server for M3 Frontend")
     print("=" * 60)
@@ -127,6 +178,8 @@ if __name__ == '__main__':
     print("  GET /api/composition/<env> - Get composition data")
     print("    Query params: top=N, group_others=true/false, others_threshold=0.5")
     print("  GET /api/stats           - Get data statistics")
+    print("  GET /api/geographic-locations - List available geographic locations")
+    print("  GET /api/location/<location> - Get data filtered by geographic location")
     print("=" * 60)
     
     # Run the server

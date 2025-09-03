@@ -2,7 +2,7 @@ import pandas as pd
 import os
 
 def main():
-    source_file = "sandpiper1.0.0.condensed.biosample-metadata.csv.gz"
+    source_file = "Microbe-vis-data/sandpiper1.0.0.condensed.biosample-metadata.csv.gz"
     output_file = "relevant_columns_data.csv.gz"
 
     if not os.path.exists(source_file):

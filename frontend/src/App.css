@@ -42,3 +42,142 @@
 .read-the-docs {
   color: #888;
 }
+
+
+
+
+
+/* Location Data Component */
+.location-data {
+  padding: 16px;
+}
+
+.location-data .no-selection {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  padding: 20px;
+}
+
+.location-data .loading {
+  text-align: center;
+  color: #667eea;
+  padding: 20px;
+}
+
+.location-data .error {
+  color: #e74c3c;
+  text-align: center;
+  padding: 16px;
+  background: rgba(231, 76, 60, 0.1);
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.location-data .retry-btn {
+  margin-top: 8px;
+  padding: 6px 12px;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.location-data .location-summary h3 {
+  margin: 0 0 16px 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.location-data .stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.location-data .stat-item {
+  text-align: center;
+  padding: 16px;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+.location-data .stat-number {
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+  color: #667eea;
+  margin-bottom: 4px;
+}
+
+.location-data .stat-label {
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.location-data .sample-locations,
+.location-data .biorun-data {
+  margin-top: 20px;
+}
+
+.location-data h4 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 16px;
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 8px;
+}
+
+.location-data .locations-list,
+.location-data .biorun-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.location-data .sample-item,
+.location-data .biorun-item {
+  padding: 8px 12px;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  background: white;
+}
+
+.location-data .sample-biosample,
+.location-data .biorun-accession {
+  font-weight: 600;
+  color: #333;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.location-data .sample-coords,
+.location-data .biorun-organism {
+  color: #666;
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+
+.location-data .sample-date,
+.location-data .biorun-instrument {
+  color: #999;
+  font-size: 11px;
+  font-style: italic;
+}
+
+.location-data .more-samples,
+.location-data .more-bioruns {
+  text-align: center;
+  color: #999;
+  font-size: 12px;
+  font-style: italic;
+  padding: 8px;
+  background: #f9f9f9;
+  border-radius: 4px;
+}

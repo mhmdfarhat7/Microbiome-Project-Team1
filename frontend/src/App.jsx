@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import EnvironmentSelect from "./components/EnvironmentSelect";
 import LevelSelect from "./components/LevelSelect";
 import CompositionChart from "./components/CompositionChart";
+import LocationSelect from "./components/LocationSelect";
+import LocationData from "./components/LocationData";
 import Panel from "./components/Panel";
 import { fetchEnvironments, fetchComposition } from "./services/api"; // Real M2 backend API
 
@@ -14,6 +16,7 @@ export default function App() {
   const [loadingData, setLoadingData] = useState(false);
   const [error, setError] = useState("");
   const [chartType, setChartType] = useState("pie");
+  const [selectedLocation, setSelectedLocation] = useState("");
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   // load environment list once
@@ -124,6 +127,11 @@ export default function App() {
                   onChange={setLevel}
                   disabled={!env}
                 />
+                <div style={{ height: 16 }} />
+                <LocationSelect
+                  selectedLocation={selectedLocation}
+                  onLocationSelect={setSelectedLocation}
+                />
               </>
             )}
           </Panel>
@@ -163,6 +171,12 @@ export default function App() {
               Switch between chart types to explore your data differently.
             </small>
           </Panel>
+
+          {selectedLocation && (
+            <Panel title="🌍 Location Data">
+              <LocationData selectedLocation={selectedLocation} />
+            </Panel>
+          )}
         </div>
 
         {/* right column: chart */}

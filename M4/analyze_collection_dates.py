@@ -2,7 +2,7 @@ import pandas as pd
 import os
 
 def main():
-    data_file = "sandpiper1.0.0.condensed.biosample-metadata.csv.gz"
+    data_file = "Microbe-vis-data/sandpiper1.0.0.condensed.biosample-metadata.csv.gz"
     if not os.path.exists(data_file):
         print(f"ERROR: File '{data_file}' not found!")
         return
