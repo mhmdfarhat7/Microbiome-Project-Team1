@@ -7,15 +7,16 @@ def main():
     print("BIORUN METADATA FILTERED EXTRACTION")
     print("=" * 60)
     
-    # Dataset file - updated to use the correct path and .gz extension
-    data_file = "Microbe-vis-data/sandpiper1.0.0.condensed.biorun-metadata.csv.gz"
+    # תיקיית הסקריפט (M1)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    data_file = os.path.join(script_dir, "sandpiper1.0.0.condensed.biorun-metadata.csv.gz")
+    
     if not os.path.exists(data_file):
         print(f"ERROR: File '{data_file}' not found!")
-        print("Available files in Microbe-vis-data/:")
-        if os.path.exists("Microbe-vis-data/"):
-            for f in os.listdir("Microbe-vis-data/"):
-                if "biorun-metadata" in f:
-                    print(f"  - {f}")
+        print("Available files in M1/:")
+        for f in os.listdir(script_dir):
+            if "biorun-metadata" in f:
+                print(f"  - {f}")
         return
     
     # Load dataset
@@ -42,8 +43,12 @@ def main():
     df = df[df['organism_name'].str.contains('metagenome', case=False, na=False)]
     print(f"✓ Filtered rows containing 'metagenome': {len(df):,}")
     
+    # Ensure output directory exists
+    output_dir = os.path.join(script_dir, "..", "data", "processed")
+    os.makedirs(output_dir, exist_ok=True)
+    
     # Save filtered dataset for EDA
-    output_file = "filtered_bioruns.csv"
+    output_file = os.path.join(output_dir, "filtered_bioruns.csv")
     df.to_csv(output_file, index=False)
     print(f"✓ Filtered dataset saved to '{output_file}'")
     
@@ -52,11 +57,8 @@ def main():
     df_m2['run_accession'] = df_m2['run_accession'].astype(str)
     df_m2 = df_m2.set_index('run_accession')
     
-    # Ensure output directory exists
-    os.makedirs('data/processed', exist_ok=True)
-    
     # Save M2-compatible parquet file
-    m2_output = "data/processed/biorun_metadata_clean.parquet"
+    m2_output = os.path.join(output_dir, "biorun_metadata_clean.parquet")
     df_m2.to_parquet(m2_output)
     print(f"✓ M2-compatible metadata saved to '{m2_output}'")
     print(f"✓ M2 file has {len(df_m2)} rows with index 'run_accession'")

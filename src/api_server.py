@@ -17,7 +17,7 @@ import os
 # Add current directory to path for imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from backend_lib import get_environments, get_phylum_composition, get_geographic_locations, get_data_by_location
+from backend_lib import get_environments, get_phylum_composition
 
 app = Flask(__name__)
 CORS(app)  # Allow M3 frontend to call this API
@@ -52,16 +52,12 @@ def api_composition(env):
     try:
         # Get query parameters
         top = request.args.get('top', type=int, default=50)
-        group_others = request.args.get('group_others', type=str, default='true').lower() == 'true'
-        others_threshold = request.args.get('others_threshold', type=float, default=0.5)
         
         # Get composition data
         result = get_phylum_composition(
             env=env, 
             top=top, 
-            as_dataframe=False,
-            group_others=group_others,
-            others_threshold=others_threshold
+            as_dataframe=False
         )
         
         return jsonify({
@@ -120,16 +116,28 @@ def api_stats():
 
 @app.route('/api/geographic-locations', methods=['GET'])
 def api_geographic_locations():
-    """Get list of available geographic locations."""
+    """Get list of available geographic locations from the dedicated unique file."""
     try:
-        from backend_lib import get_geographic_locations
+        import pandas as pd
+        import os
+        from flask import jsonify
         
-        locations = get_geographic_locations()
+        # Path to the dedicated unique file
+        data_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
+            "data", "processed", "geo_loc_name_unique.csv.gz"
+        )
+        
+        # Load the unique values directly
+        df = pd.read_csv(data_path)
+        
+        # Convert to list and sort (in case not sorted already)
+        geo_locations = df['geo_loc_name'].dropna().sort_values().tolist()
         
         return jsonify({
             'success': True,
-            'locations': locations,
-            'count': len(locations)
+            'geo_locations': geo_locations,
+            'count': len(geo_locations)
         })
         
     except Exception as e:
@@ -137,7 +145,6 @@ def api_geographic_locations():
             'success': False,
             'error': str(e)
         }), 500
-
 
 @app.route('/api/location/<location>', methods=['GET'])
 def api_location_data(location):
@@ -176,7 +183,7 @@ if __name__ == '__main__':
     print("  GET /api/health          - Health check")
     print("  GET /api/environments    - List environments")
     print("  GET /api/composition/<env> - Get composition data")
-    print("    Query params: top=N, group_others=true/false, others_threshold=0.5")
+    print("    Query params: top=N")
     print("  GET /api/stats           - Get data statistics")
     print("  GET /api/geographic-locations - List available geographic locations")
     print("  GET /api/location/<location> - Get data filtered by geographic location")
