@@ -156,7 +156,10 @@ def api_location_data(location):
         import urllib.parse
         decoded_location = urllib.parse.unquote(location)
         
-        result = get_data_by_location(decoded_location)
+        # Get query parameters
+        top = request.args.get('top', type=int, default=50)
+        
+        result = get_data_by_location(decoded_location, top=top)
         
         if result.get('success', False):
             return jsonify({
@@ -187,6 +190,7 @@ if __name__ == '__main__':
     print("  GET /api/stats           - Get data statistics")
     print("  GET /api/geographic-locations - List available geographic locations")
     print("  GET /api/location/<location> - Get data filtered by geographic location")
+    print("    Query params: top=N")
     print("=" * 60)
     
     # Run the server

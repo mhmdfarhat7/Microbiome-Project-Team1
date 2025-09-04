@@ -104,6 +104,51 @@ export async function fetchGeographicLocations() {
   }
 }
 
+export async function fetchLocationComposition(location, top = 50) {
+  try {
+    const url = `${API_BASE_URL}/location/${encodeURIComponent(
+      location
+    )}?top=${top}`;
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.error || "Failed to fetch location composition");
+    }
+
+    // Transform location data to the same format as environment composition
+    const composition = data.data;
+
+    // Extract labels and values for Chart.js
+    const labels = composition.composition.map((item) => {
+      // Clean up phylum names for display
+      let cleanName = item.taxon;
+      if (cleanName.startsWith("d__Bacteria;p__")) {
+        cleanName = cleanName.replace("d__Bacteria;p__", "");
+      } else if (cleanName.startsWith("d__Archaea;p__")) {
+        cleanName = cleanName.replace("d__Archaea;p__", "");
+      }
+      return cleanName;
+    });
+
+    const values = composition.composition.map((item) => item.mean_percent);
+
+    return {
+      labels,
+      values,
+      metadata: {
+        location: composition.location,
+        level: composition.level,
+        n_runs: composition.n_runs,
+        unassigned_included: composition.unassigned_included,
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching location composition:", error);
+    throw error;
+  }
+}
+
 export async function checkHealth() {
   try {
     const response = await fetch(`${API_BASE_URL}/health`);

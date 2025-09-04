@@ -49,8 +49,8 @@ def load_metadata(path: str) -> pd.DataFrame:
 
 def load_phylum_rows(phylum_path: str, target_bioruns: Iterable[str]) -> pd.DataFrame:
     """
-    Load ONLY the rows (bioruns) we need from the large phylum CSV by chunking.
-    - phylum_path: path to 'sandpiper1.0.0.condensed.summary.phylum.csv.gz'
+    Load ONLY the rows (bioruns) we need from the large phylum file by chunking.
+    - phylum_path: path to phylum composition file (CSV or Parquet)
     - target_bioruns: iterable (set/list) of run_accession IDs to keep
 
     Returns a DataFrame where:
@@ -66,30 +66,51 @@ def load_phylum_rows(phylum_path: str, target_bioruns: Iterable[str]) -> pd.Data
         # Return empty DF with no columns; caller should handle
         return pd.DataFrame()
 
-    # Read first chunk to learn columns (so our concatenation preserves order)
-    # We pass index_col=0 to make 'biorun' the index.
-    chunks = []
-    for chunk in pd.read_csv(
-        phylum_path,
-        index_col=0,
-        chunksize=50_000,   # tune if needed
-        low_memory=True
-    ):
-        # chunk.index are biorun ids
-        keep = chunk.index.isin(target)
+    ext = os.path.splitext(phylum_path)[1].lower()
+    
+    if ext in {".parquet"}:
+        # For parquet files, read the entire file and filter
+        df_full = pd.read_parquet(phylum_path)
+        if 'biorun' in df_full.columns:
+            df_full = df_full.set_index('biorun')
+        elif df_full.index.name != 'biorun':
+            # Assume first column is biorun if not set as index
+            df_full = df_full.set_index(df_full.columns[0])
+        
+        # Filter to target bioruns
+        keep = df_full.index.isin(target)
         if keep.any():
-            # Ensure numeric dtype (sometimes CSVs load as object)
-            num = chunk.loc[keep].apply(pd.to_numeric, errors="coerce")
-            chunks.append(num)
+            df = df_full.loc[keep].copy()
+            # Ensure numeric dtype
+            df = df.apply(pd.to_numeric, errors="coerce")
+            df = df.astype("float64")
+            return df
+        else:
+            return pd.DataFrame()
+    else:
+        # For CSV files, use chunked reading
+        chunks = []
+        for chunk in pd.read_csv(
+            phylum_path,
+            index_col=0,
+            chunksize=50_000,   # tune if needed
+            low_memory=True
+        ):
+            # chunk.index are biorun ids
+            keep = chunk.index.isin(target)
+            if keep.any():
+                # Ensure numeric dtype (sometimes CSVs load as object)
+                num = chunk.loc[keep].apply(pd.to_numeric, errors="coerce")
+                chunks.append(num)
 
-    if not chunks:
-        return pd.DataFrame()
+        if not chunks:
+            return pd.DataFrame()
 
-    df = pd.concat(chunks, axis=0)
-    # Optional sanity: ensure values are floats
-    df = df.astype("float64")
+        df = pd.concat(chunks, axis=0)
+        # Optional sanity: ensure values are floats
+        df = df.astype("float64")
 
-    return df
+        return df
 
 
 # ----------------------------------------------------

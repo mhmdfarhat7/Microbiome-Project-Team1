@@ -9,6 +9,7 @@ import {
   fetchEnvironments,
   fetchComposition,
   fetchGeographicLocations,
+  fetchLocationComposition,
 } from "./services/api"; // Real M2 backend API
 
 export default function App() {
@@ -74,6 +75,24 @@ export default function App() {
       }
     })();
   }, [env, level]);
+
+  // fetch location composition when selectedLocation changes
+  useEffect(() => {
+    if (!selectedLocation) return;
+    setLoadingData(true);
+    setError("");
+    (async () => {
+      try {
+        const res = await fetchLocationComposition(selectedLocation, 50);
+        setData(res);
+      } catch (e) {
+        setError("Failed to load location composition");
+        setData(null);
+      } finally {
+        setLoadingData(false);
+      }
+    })();
+  }, [selectedLocation]);
 
   return (
     <div
@@ -242,7 +261,7 @@ export default function App() {
               Loading composition…
             </div>
           )}
-          {!env && (
+          {!env && !selectedLocation && (
             <div
               style={{
                 color: "rgba(255, 255, 255, 0.8)",
@@ -251,7 +270,7 @@ export default function App() {
                 fontSize: "1.2rem",
               }}
             >
-              Select an environment to see results.
+              Select an environment or geographic location to see results.
             </div>
           )}
           {data && (

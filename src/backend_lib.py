@@ -22,7 +22,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Fixed paths for M3 integration
 METADATA_PATH = os.path.join(script_dir, "..", "data", "processed", "biorun_metadata_clean.parquet")
-PHYLUM_PATH = os.path.join(script_dir, "sandpiper1.0.0.condensed.summary.phylum.csv.gz")
+PHYLUM_PATH = os.path.join(script_dir, "sandpiper1.0.0.condensed.summary.phylum.filtered.parquet")
 
 
 @lru_cache(maxsize=1)
@@ -148,6 +148,119 @@ def get_environment_stats() -> Dict[str, int]:
     df_meta = _get_cached_metadata()
     env_counts = df_meta['organism_name'].value_counts()
     return dict(env_counts)
+
+
+def get_data_by_location(location: str, top: Optional[int] = 50) -> Dict[str, Any]:
+    """
+    Get phylum composition data filtered by geographic location.
+    
+    This function:
+    1. Gets matching biosamples from geo_loc_name_with_biosample.csv.gz
+    2. Filters biorun_metadata_clean.parquet for matching biosamples
+    3. Gets phylum data from sandpiper1.0.0.condensed.summary.phylum.csv.gz
+    4. Calculates average composition like the regular environment function
+    
+    Args:
+        location: Geographic location name to filter by
+        top: Number of top phyla to return (None for all)
+    
+    Returns:
+        Dict with structure:
+            {
+                'success': bool,
+                'location': str,
+                'level': 'phylum',
+                'n_runs': int,
+                'composition': [{'taxon': str, 'mean_percent': float}, ...],
+                'unassigned_included': bool,
+                'error': str (if success=False)
+            }
+    """
+    try:
+        # Paths to data files
+        geo_loc_path = os.path.join(script_dir, "..", "data", "processed", "geo_loc_name_with_biosample.csv.gz")
+        metadata_path = os.path.join(script_dir, "..", "data", "processed", "biorun_metadata_clean.parquet")
+        phylum_path = os.path.join(script_dir, "sandpiper1.0.0.condensed.summary.phylum.filtered.parquet")
+        
+        # Step 1: Load geographic location data and get matching biosamples
+        geo_df = pd.read_csv(geo_loc_path)
+        matching_biosamples = geo_df[geo_df['geo_loc_name'] == location]['biosample'].tolist()
+        
+        if not matching_biosamples:
+            return {
+                'success': False,
+                'location': location,
+                'level': 'phylum',
+                'n_runs': 0,
+                'composition': [],
+                'unassigned_included': True,
+                'error': f'No biosamples found for location: {location}'
+            }
+        
+        # Step 2: Load metadata and filter by matching biosamples
+        df_meta = pd.read_parquet(metadata_path)
+        filtered_meta = df_meta[df_meta['biosample'].isin(matching_biosamples)]
+        
+        if filtered_meta.empty:
+            return {
+                'success': False,
+                'location': location,
+                'level': 'phylum',
+                'n_runs': 0,
+                'composition': [],
+                'unassigned_included': True,
+                'error': f'No bioruns found for biosamples in location: {location}'
+            }
+        
+        # Step 3: Get phylum data for the filtered biosamples
+        phylum_df = pd.read_parquet(phylum_path)
+        matching_phylum = phylum_df[phylum_df['biosample'].isin(matching_biosamples)]
+        
+        if matching_phylum.empty:
+            return {
+                'success': False,
+                'location': location,
+                'level': 'phylum',
+                'n_runs': 0,
+                'composition': [],
+                'unassigned_included': True,
+                'error': f'No phylum data found for biosamples in location: {location}'
+            }
+        
+        # Step 4: Calculate average composition using the same logic as get_phylum_composition
+        # Group by phylum and calculate mean percentage
+        phylum_avg = matching_phylum.groupby('phylum')['percent'].mean().sort_values(ascending=False)
+        
+        # Apply top filter if specified
+        if top is not None:
+            phylum_avg = phylum_avg.head(top)
+        
+        # Convert to the expected format
+        composition_list = [
+            {'taxon': str(taxon), 'mean_percent': float(percent)}
+            for taxon, percent in phylum_avg.items()
+        ]
+        
+        return {
+            'success': True,
+            'location': location,
+            'level': 'phylum',
+            'n_runs': len(filtered_meta),
+            'composition': composition_list,
+            'unassigned_included': True,
+            'error': None
+        }
+        
+    except Exception as e:
+        return {
+            'success': False,
+            'location': location,
+            'level': 'phylum',
+            'n_runs': 0,
+            'composition': [],
+            'unassigned_included': True,
+            'error': f'Error processing location data: {str(e)}'
+        }
 
 
 # Example usage for M3 developers
