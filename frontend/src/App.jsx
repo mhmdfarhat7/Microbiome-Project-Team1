@@ -5,12 +5,13 @@ import CompositionChart from "./components/CompositionChart";
 import LocationSelect from "./components/LocationSelect";
 import LocationData from "./components/LocationData";
 import Panel from "./components/Panel";
+import LoadingModal from "./components/LoadingModal";
 import {
-  fetchEnvironments,
   fetchComposition,
   fetchGeographicLocations,
   fetchLocationComposition,
 } from "./services/api"; // Real M2 backend API
+import { STATIC_ENVIRONMENTS } from "./constants/environments";
 
 export default function App() {
   const [envs, setEnvs] = useState([]);
@@ -19,6 +20,7 @@ export default function App() {
   const [data, setData] = useState(null);
   const [loadingEnv, setLoadingEnv] = useState(true);
   const [loadingData, setLoadingData] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("Loading...");
   const [error, setError] = useState("");
   const [chartType, setChartType] = useState("pie");
   const [selectedLocation, setSelectedLocation] = useState("");
@@ -26,23 +28,21 @@ export default function App() {
   const [geographicLocations, setGeographicLocations] = useState([]);
   const [loadingLocations, setLoadingLocations] = useState(true);
 
-  // load environment list and geographic locations in parallel
+  // load environment list and geographic locations
   useEffect(() => {
     (async () => {
       try {
-        // Load both in parallel for faster loading
-        const [envList, locations] = await Promise.all([
-          fetchEnvironments(),
-          fetchGeographicLocations(),
-        ]);
+        // Use static environments list - no need to fetch from server
+        setEnvs(STATIC_ENVIRONMENTS);
+        setLoadingEnv(false);
 
-        setEnvs(envList);
+        // Only fetch geographic locations from server
+        const locations = await fetchGeographicLocations();
         setGeographicLocations(locations);
       } catch (e) {
-        setError("Failed to load data");
-        console.error("Error loading initial data:", e);
+        setError("Failed to load geographic locations");
+        console.error("Error loading geographic locations:", e);
       } finally {
-        setLoadingEnv(false);
         setLoadingLocations(false);
       }
     })();
@@ -62,6 +62,7 @@ export default function App() {
   useEffect(() => {
     if (!env) return;
     setLoadingData(true);
+    setLoadingMessage(`Loading ${level} composition for ${env}...`);
     setError("");
     (async () => {
       try {
@@ -76,14 +77,24 @@ export default function App() {
     })();
   }, [env, level]);
 
-  // fetch location composition when selectedLocation changes
+  // fetch location composition when selectedLocation or level changes
   useEffect(() => {
-    if (!selectedLocation) return;
+    if (!selectedLocation || selectedLocation.trim() === "") {
+      // If no location selected, clear data and return to environment view
+      setData(null);
+      setError("");
+      setLoadingData(false);
+      return;
+    }
+
     setLoadingData(true);
+    setLoadingMessage(
+      `Loading ${level} composition for ${selectedLocation}...`
+    );
     setError("");
     (async () => {
       try {
-        const res = await fetchLocationComposition(selectedLocation, 50);
+        const res = await fetchLocationComposition(selectedLocation, level, 50);
         setData(res);
       } catch (e) {
         setError("Failed to load location composition");
@@ -92,7 +103,27 @@ export default function App() {
         setLoadingData(false);
       }
     })();
-  }, [selectedLocation]);
+  }, [selectedLocation, level]);
+
+  // When location is cleared, try to load environment data if available
+  useEffect(() => {
+    if ((!selectedLocation || selectedLocation.trim() === "") && env) {
+      setLoadingData(true);
+      setLoadingMessage(`Loading ${level} composition for ${env}...`);
+      setError("");
+      (async () => {
+        try {
+          const res = await fetchComposition(env, level);
+          setData(res);
+        } catch (e) {
+          setError("Failed to load composition");
+          setData(null);
+        } finally {
+          setLoadingData(false);
+        }
+      })();
+    }
+  }, [selectedLocation, env, level]);
 
   return (
     <div
@@ -231,8 +262,9 @@ export default function App() {
           style={{
             display: "flex",
             flexDirection: "column",
-            height: "100%",
+            // height: "100%",
             overflow: "hidden",
+            paddingBottom: isMobile ? 0 : 50,
           }}
         >
           {error && (
@@ -249,19 +281,19 @@ export default function App() {
               {error}
             </div>
           )}
-          {loadingData && env && (
+          {!env && !selectedLocation && (
             <div
               style={{
-                color: "white",
+                color: "rgba(255, 255, 255, 0.8)",
                 textAlign: "center",
                 padding: "40px",
                 fontSize: "1.2rem",
               }}
             >
-              Loading composition…
+              Select an environment or geographic location to see results.
             </div>
           )}
-          {!env && !selectedLocation && (
+          {!env && selectedLocation && selectedLocation.trim() === "" && (
             <div
               style={{
                 color: "rgba(255, 255, 255, 0.8)",
@@ -280,6 +312,9 @@ export default function App() {
           )}
         </div>
       </div>
+
+      {/* Loading Modal */}
+      <LoadingModal isVisible={loadingData} message={loadingMessage} />
     </div>
   );
 }

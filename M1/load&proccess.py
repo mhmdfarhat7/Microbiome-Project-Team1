@@ -4,7 +4,7 @@ import os
 
 def main():
     print("=" * 60)
-    print("BIORUN METADATA FILTERED EXTRACTION")
+    print("BIORUN METADATA FILTERED EXTRACTION (SOIL METAGENOME)")
     print("=" * 60)
     
     # תיקיית הסקריפט (M1)
@@ -39,9 +39,9 @@ def main():
     
     df = df[required_cols].copy()
     
-    # Filter for 'metagenome' in organism_name
-    df = df[df['organism_name'].str.contains('metagenome', case=False, na=False)]
-    print(f"✓ Filtered rows containing 'metagenome': {len(df):,}")
+    # Filter ONLY rows containing 'soil metagenome' (case insensitive)
+    df = df[df['organism_name'].str.contains(r'\bsoil metagenome\b', case=False, na=False)]
+    print(f"✓ Filtered rows containing 'soil metagenome': {len(df):,}")
     
     # Ensure output directory exists
     output_dir = os.path.join(script_dir, "..", "data", "processed")

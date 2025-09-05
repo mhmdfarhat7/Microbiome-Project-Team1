@@ -17,7 +17,7 @@ import os
 # Add current directory to path for imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from backend_lib import get_environments, get_phylum_composition
+from backend_lib import get_environments, get_phylum_composition, get_composition, get_data_by_location, clear_composition_cache, get_cache_stats
 
 app = Flask(__name__)
 CORS(app)  # Allow M3 frontend to call this API
@@ -48,14 +48,16 @@ def api_environments():
 
 @app.route('/api/composition/<env>', methods=['GET'])
 def api_composition(env):
-    """Get phylum composition for a specific environment."""
+    """Get taxonomic composition for a specific environment and level."""
     try:
         # Get query parameters
         top = request.args.get('top', type=int, default=50)
+        level = request.args.get('level', default='phylum')
         
         # Get composition data
-        result = get_phylum_composition(
+        result = get_composition(
             env=env, 
+            level=level,
             top=top, 
             as_dataframe=False
         )
@@ -66,7 +68,7 @@ def api_composition(env):
         })
         
     except ValueError as e:
-        # Environment not found
+        # Environment not found or invalid level
         return jsonify({
             'success': False,
             'error': str(e)
@@ -150,16 +152,15 @@ def api_geographic_locations():
 def api_location_data(location):
     """Get microbiome data filtered by geographic location."""
     try:
-        from backend_lib import get_data_by_location
-        
         # Decode URL-encoded location name
         import urllib.parse
         decoded_location = urllib.parse.unquote(location)
         
         # Get query parameters
         top = request.args.get('top', type=int, default=50)
+        level = request.args.get('level', default='phylum')
         
-        result = get_data_by_location(decoded_location, top=top)
+        result = get_data_by_location(decoded_location, level=level, top=top)
         
         if result.get('success', False):
             return jsonify({
@@ -179,6 +180,38 @@ def api_location_data(location):
         }), 500
 
 
+@app.route('/api/cache/clear', methods=['POST'])
+def api_clear_cache():
+    """Clear all cached composition data."""
+    try:
+        clear_composition_cache()
+        return jsonify({
+            'success': True,
+            'message': 'Cache cleared successfully'
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/cache/stats', methods=['GET'])
+def api_cache_stats():
+    """Get cache statistics."""
+    try:
+        stats = get_cache_stats()
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 if __name__ == '__main__':
     print("🚀 Starting M2 Backend API Server for M3 Frontend")
     print("=" * 60)
@@ -186,11 +219,13 @@ if __name__ == '__main__':
     print("  GET /api/health          - Health check")
     print("  GET /api/environments    - List environments")
     print("  GET /api/composition/<env> - Get composition data")
-    print("    Query params: top=N")
+    print("    Query params: top=N, level=phylum|class|order|family|genus")
     print("  GET /api/stats           - Get data statistics")
     print("  GET /api/geographic-locations - List available geographic locations")
     print("  GET /api/location/<location> - Get data filtered by geographic location")
-    print("    Query params: top=N")
+    print("    Query params: top=N, level=phylum|class|order|family|genus")
+    print("  POST /api/cache/clear    - Clear composition cache")
+    print("  GET /api/cache/stats     - Get cache statistics")
     print("=" * 60)
     
     # Run the server

@@ -24,14 +24,9 @@ export async function fetchEnvironments(top = null) {
 
 export async function fetchComposition(env, level = "phylum", top = 50) {
   try {
-    // For now, we only support phylum level
-    if (level !== "phylum") {
-      throw new Error("Only phylum level is currently supported");
-    }
-
     const url = `${API_BASE_URL}/composition/${encodeURIComponent(
       env
-    )}?top=${top}`;
+    )}?top=${top}&level=${level}`;
     const response = await fetch(url);
     const data = await response.json();
 
@@ -44,7 +39,7 @@ export async function fetchComposition(env, level = "phylum", top = 50) {
 
     // Extract labels and values for Chart.js
     const labels = composition.composition.map((item) => {
-      // Clean up phylum names for display
+      // Clean up taxonomic names for display
       let cleanName = item.taxon;
       if (cleanName.startsWith("d__Bacteria;p__")) {
         cleanName = cleanName.replace("d__Bacteria;p__", "");
@@ -104,11 +99,15 @@ export async function fetchGeographicLocations() {
   }
 }
 
-export async function fetchLocationComposition(location, top = 50) {
+export async function fetchLocationComposition(
+  location,
+  level = "phylum",
+  top = 50
+) {
   try {
     const url = `${API_BASE_URL}/location/${encodeURIComponent(
       location
-    )}?top=${top}`;
+    )}?top=${top}&level=${level}`;
     const response = await fetch(url);
     const data = await response.json();
 
@@ -121,7 +120,7 @@ export async function fetchLocationComposition(location, top = 50) {
 
     // Extract labels and values for Chart.js
     const labels = composition.composition.map((item) => {
-      // Clean up phylum names for display
+      // Clean up taxonomic names for display
       let cleanName = item.taxon;
       if (cleanName.startsWith("d__Bacteria;p__")) {
         cleanName = cleanName.replace("d__Bacteria;p__", "");

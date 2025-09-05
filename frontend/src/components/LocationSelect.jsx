@@ -75,6 +75,12 @@ export default function LocationSelect({
     setSearchTerm("");
   };
 
+  const handleClearSelection = () => {
+    onLocationSelect("");
+    setSearchTerm("");
+    setIsOpen(false);
+  };
+
   const handleInputChange = (e) => {
     setSearchTerm(e.target.value);
     setIsOpen(true);
@@ -284,9 +290,39 @@ export default function LocationSelect({
             borderRadius: "6px",
             fontSize: "13px",
             color: "#667eea",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
           }}
         >
-          📍 Selected: <strong>{selectedLocation}</strong>
+          <span>
+            📍 Selected: <strong>{selectedLocation}</strong>
+          </span>
+          <button
+            onClick={handleClearSelection}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#667eea",
+              cursor: "pointer",
+              fontSize: "16px",
+              padding: "4px",
+              borderRadius: "4px",
+              transition: "background-color 0.2s ease",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = "rgba(102, 126, 234, 0.2)";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = "transparent";
+            }}
+            title="Clear selection"
+          >
+            ✕
+          </button>
         </div>
       )}
     </label>

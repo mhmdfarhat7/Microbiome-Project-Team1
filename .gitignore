@@ -1,17 +1,25 @@
-# Ignore the Microbe-vis-data directory and all its contents
-data
+# Data directories and files
+data/
+M1/sandpiper1.0.0.condensed.biorun-metadata.csv.gz
+M4/sandpiper1.0.0.condensed.biosample-metadata.csv.gz
+
+# Large data files in src/
 src/sandpiper1.0.0.condensed.summary.phylum.csv.gz
 src/sandpiper1.0.0.condensed.summary.phylum.filtered.csv.gz
 src/sandpiper1.0.0.condensed.summary.phylum.filtered.parquet
-M4/sandpiper1.0.0.condensed.biosample-metadata.csv.gz
-M1/sandpiper1.0.0.condensed.biorun-metadata.csv.gz
-
+src/soil.summary.*.compact.parquet
 
 # Common data file extensions (additional safety)
 *.tsv.gz
 *.csv.gz
 *.tsv
 *.csv
+*.parquet
+*.zip
+*.tar.gz
+*.tar.bz2
+*.7z
+*.rar
 
 # OS generated files
 .DS_Store
@@ -62,3 +70,72 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+# Node.js (for frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+
+# Frontend build files
+frontend/dist/
+frontend/build/
+frontend/.vite/
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+.temp/
+
+# Cache directories
+.cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Large model files
+*.model
+*.pkl
+*.pickle
+*.h5
+*.hdf5
+
+# Jupyter notebook outputs
+*.ipynb
+
+# IDE specific files
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/dictionaries
+.idea/shelf
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Backup files
+*.bak
+*.backup
+*~
