@@ -45,16 +45,8 @@ export default function EnvironmentSelect({
       >
         <option value="">Select an environment…</option>
         {options.map((env) => (
-          <option
-            key={env}
-            value={env}
-            disabled={env !== "soil metagenome"}
-            style={{
-              color: env !== "soil metagenome" ? "#999" : "#333",
-              fontStyle: env !== "soil metagenome" ? "italic" : "normal",
-            }}
-          >
-            {env !== "soil metagenome" ? `${env} (not available)` : env}
+          <option key={env} value={env}>
+            {env}
           </option>
         ))}
       </select>
